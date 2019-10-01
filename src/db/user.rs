@@ -4,8 +4,16 @@ extern crate scrypt;
 use rand::prelude::*;
 use scrypt::{ScryptParams, scrypt_simple, scrypt_check};
 use crate::db::schema::users;
+use uuid::Uuid;
 
-#[derive(Insertable)]
+#[derive(Serialize, Deserialize)]
+pub struct RocketNewUser {
+    pub email: String,
+    pub password: String,
+    pub username: String,
+}
+
+#[derive(Serialize, Deserialize, Insertable)]
 #[table_name = "users"]
 pub struct NewUser {
     pub email: String,
@@ -33,4 +41,13 @@ impl NewUser {
             password,
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Queryable)]
+pub struct User {
+    pub id: Uuid,
+    pub email: String,
+    pub password: String,
+    pub username: String,
+    salt: String,
 }
