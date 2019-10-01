@@ -1,2 +1,10 @@
 [development]
 port = 8001
+
+[staging]
+port = 8001
+tls = { certs = "/etc/ssl/certs/cert.pem", key = "/etc/ssl/private/key.pem" }
+
+[production]
+port = 8001
+tls = { certs = "/etc/ssl/certs/cert.pem", key = "/etc/ssl/private/key.pem" }
