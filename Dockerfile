@@ -1,4 +1,4 @@
-FROM nhyne/rust-musl-builder-sccache:nightly-2019-07-08 AS build
+FROM nhyne/rust-musl-builder-sccache:nightly-2019-09-05 AS build
 
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
