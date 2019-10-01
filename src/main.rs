@@ -11,6 +11,7 @@ mod db;
 use db::user::{NewUser, User, RocketNewUser};
 use rocket_contrib::json::{Json, JsonValue};
 
+extern crate openssl;
 // Diesel ORM
 #[macro_use]
 extern crate diesel;
