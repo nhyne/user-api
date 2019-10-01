@@ -29,7 +29,7 @@ steps:
       changeset:
         includes: [ src/**/* ]
 
-  - name: docker-archiver-api
+  - name: docker-user-api
     image: plugins/docker
     settings:
       auto_tag: true
@@ -40,32 +40,6 @@ steps:
         from_secret: docker_username
     when:
       event: [ tag ]
-
-  - name: docker-diesel-cli
-    image: plugins/docker
-    settings:
-      auto_tag: true
-      password:
-        from_secret: docker_password
-      repo: nhyne/diesel-cli
-      username:
-        from_secret: docker_username
-    when:
-      changeset:
-        includes: [ DieselDockerfile ]
-
-  - name: docker-sccache
-    image: plugins/docker
-    settings:
-      auto_tag: true
-      password:
-        from_secret: docker_password
-      repo: nhyne/rust-musl-builder-sccache
-      username:
-        from_secret: docker_username
-    when:
-      changeset:
-        includes: [ SccacheDockerfile ]
 
 trigger:
   event:
