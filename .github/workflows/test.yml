@@ -1,0 +1,24 @@
+name: Cargo Test
+on:
+   push:
+     tags:
+       - 'v*'
+     paths:
+       - 'src/**/*.rs'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: nhyne/rust-musl-builder-sccache:nightly-2019-09-05-root
+    env:
+      RUSTC_WRAPPER: sccache
+      AWS_ACCESS_KEY_ID: ${{ secrets.build_cache_aws_access_key_id }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.build_cache_aws_secret_access_key }}
+      SCCACHE_BUCKET: nhyne-build-cache
+    steps:
+      - uses: actions/checkout@v1
+      - name: test
+        run: |
+          sccache --start-server
+          cargo test --verbose
+          sccache -s

@@ -1,0 +1,21 @@
+name: User API Build
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.ref }}
+      DOCKER_PASSWORD: ${{ secrets.docker_password }}
+      DOCKER_USERNAME: ${{ secrets.docker_username }}
+    steps:
+      - uses: actions/checkout@v1
+      - name: build
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          LOCAL_TAG=$(echo $TAG | cut -d '/' -f3)
+          docker build -t "nhyne/user-api:$LOCAL_TAG" .
+          docker login -p $DOCKER_PASSWORD -u $DOCKER_USERNAME
+          docker push "nhyne/user-api:$LOCAL_TAG"
