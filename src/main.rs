@@ -1,5 +1,4 @@
 #![feature(proc_macro_hygiene)]
-// Rocket web server
 #![feature(decl_macro)]
 #[macro_use]
 extern crate rocket;
