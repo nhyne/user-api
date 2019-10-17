@@ -13,7 +13,7 @@ jobs:
     container:
       image: ekidd/rust-musl-builder:nightly-2019-09-05-openssl11
     env:
-      RUSTC_WRAPPER: sccache
+      #RUSTC_WRAPPER: sccache
       AWS_ACCESS_KEY_ID: ${{ secrets.build_cache_aws_access_key_id }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.build_cache_aws_secret_access_key }}
       SCCACHE_BUCKET: nhyne-build-cache
