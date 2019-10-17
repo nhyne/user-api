@@ -8,7 +8,7 @@ extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
 mod db;
-use db::user::{NewUser, User, RocketNewUser};
+use db::user::{NewUser, RocketNewUser, User};
 use rocket_contrib::json::{Json, JsonValue};
 
 extern crate openssl;
@@ -54,6 +54,5 @@ fn establish_connection() -> PgConnection {
 }
 
 fn main() {
-    NewUser::new(String::from("something@somewhere.io"), String::from("abadpass"), String::from("username"));
     rocket().launch();
 }
