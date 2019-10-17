@@ -1,10 +1,15 @@
-[development]
+[global]
 port = 8001
+[global.tls]
+certs = "/etc/ssl/certs/nhyne-dev-cert.pem"
+key = "/etc/ssl/certs/nhyne-dev-key.pem"
 
 [staging]
-port = 8001
-tls = { certs = "/etc/ssl/certs/cert.pem", key = "/etc/ssl/private/key.pem" }
+address = "0.0.0.0"
 
 [production]
-port = 8001
-tls = { certs = "/etc/ssl/certs/cert.pem", key = "/etc/ssl/private/key.pem" }
+address = "0.0.0.0"
+
+[development]
+address = "127.0.0.1"
+
