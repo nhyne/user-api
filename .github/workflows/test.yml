@@ -5,6 +5,8 @@ on:
        - 'v*'
      paths:
        - 'src/**/*.rs'
+       - 'Cargo.toml'
+       - 'Cargo.lock'
 jobs:
   test:
     runs-on: ubuntu-latest
