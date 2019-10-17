@@ -5,6 +5,7 @@ on:
        - 'v*'
      paths:
        - 'src/**/*.rs'
+       - 'src/*.rs'
        - 'Cargo.toml'
        - 'Cargo.lock'
 jobs:
