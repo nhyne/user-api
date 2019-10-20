@@ -7,7 +7,7 @@ extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
 mod db;
-use db::user::{NewUser, RocketLogin, RocketNewUser, User};
+use db::user::{NewUser, RocketLogin, RocketNewUser, Token, User};
 use rocket_contrib::json::{Json, JsonValue};
 use uuid::Uuid;
 
@@ -44,7 +44,7 @@ fn new(input_user: Json<RocketNewUser>) -> JsonValue {
 }
 
 #[post("/login", format = "json", data = "<login_attempt>")]
-fn login(login_attempt: Json<RocketLogin>) -> JsonValue {
+fn login(login_attempt: Json<RocketLogin>) -> Json<Token> {
     use db::schema::users;
     let connection = establish_connection();
 
@@ -56,14 +56,15 @@ fn login(login_attempt: Json<RocketLogin>) -> JsonValue {
     println!("{:#?}", selected_user_vec);
     match selected_user_vec {
         Ok(user) => {
-            let successful_login = User::validate_password(&user, &login_attempt.password);
-            if successful_login {
-                json!("{message: good}")
-            } else {
-                json!("{message: bad password}")
-            }
+            let login_token = User::login_and_receive_jwt(&user, &login_attempt.password);
+            Json(login_token)
         }
-        Err(_) => json!("{message: bad}"),
+        Err(_) => {
+            let login_token = Token {
+                token: String::from(""),
+            };
+            Json(login_token)
+        }
     }
 
     // run login attempt

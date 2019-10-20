@@ -17,6 +17,11 @@ struct Claims {
     exp: SystemTime,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Token {
+    pub token: String,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct RocketNewUser {
     pub email: String,
@@ -71,12 +76,14 @@ pub struct User {
 }
 
 impl User {
-    pub fn login_and_receive_jwt(&self, raw_password_attempt: &String) -> String {
+    pub fn login_and_receive_jwt(&self, raw_password_attempt: &String) -> Token {
         let login_attempt = self.validate_password(raw_password_attempt);
         if login_attempt {
             self.generate_jwt()
         } else {
-            String::from("")
+            Token {
+                token: String::from(""),
+            }
         }
     }
 
@@ -88,7 +95,7 @@ impl User {
         }
     }
 
-    fn generate_jwt(&self) -> String {
+    fn generate_jwt(&self) -> Token {
         let token_expiration = SystemTime::now() + Duration::new(1_800, 0);
         let user_claims = Claims {
             userId: self.id,
@@ -96,6 +103,6 @@ impl User {
             exp: token_expiration,
         };
         let token = encode(&Header::default(), &user_claims, "secret".as_ref()).unwrap();
-        token
+        Token { token }
     }
 }
