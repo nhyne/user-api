@@ -7,7 +7,7 @@ extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
 mod db;
-use db::user::{NewUser, RocketNewUser, User};
+use db::user::{NewUser, RocketNewUser, User, RocketLogin};
 use rocket_contrib::json::{Json, JsonValue};
 
 extern crate openssl;
@@ -27,6 +27,7 @@ fn new(input_user: Json<RocketNewUser>) -> JsonValue {
     use db::schema::users;
     let connection = establish_connection();
     let new_user = NewUser::new(
+        // TODO: This should not need to be a clone, just make the function take a pointer
         // I genuinely feel ashamed for doing this
         input_user.email.clone(),
         input_user.password.clone(),
@@ -40,6 +41,14 @@ fn new(input_user: Json<RocketNewUser>) -> JsonValue {
         Err(e) => json!("{message: bad}"),
     }
 }
+
+//#[post("/login", format = "json", data = "login_attempt")]
+//fn login(login_attempt: Json<RocketLogin>) -> JsonValue {
+//    use db::schema::users;
+//    let connection = establish_connection();
+//
+//
+//}
 
 fn rocket() -> rocket::Rocket {
     rocket::ignite().mount("/api/users", routes![new])
