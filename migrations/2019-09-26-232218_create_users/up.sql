@@ -8,3 +8,5 @@ CREATE TABLE users (
   salt VARCHAR NOT NULL,
   password VARCHAR NOT NULL
 );
+
+CREATE UNIQUE INDEX email_idx ON users (email);

@@ -1,8 +1,6 @@
 name: Cargo Test
 on:
    push:
-     tags:
-       - 'v*'
      paths:
        - 'src/**/*.rs'
        - 'src/*.rs'

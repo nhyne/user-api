@@ -10,12 +10,14 @@ jobs:
       TAG: ${{ github.ref }}
       DOCKER_PASSWORD: ${{ secrets.docker_password }}
       DOCKER_USERNAME: ${{ secrets.docker_username }}
+      SCCACHE_BUILD_KEY: ${{ secrets.build_cache_aws_access_key_id }}
+      SCCACHE_BUILD_SECRET: ${{ secrets.build_cache_aws_secret_access_key }}
     steps:
       - uses: actions/checkout@v1
       - name: build
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           LOCAL_TAG=$(echo $TAG | cut -d '/' -f3)
-          docker build -t "nhyne/user-api:$LOCAL_TAG" .
+          docker build --build-arg AWS_ACCESS_KEY_ID=$SCCACHE_BUILD_KEY --build-arg AWS_SECRET_ACCESS_KEY=$SCCACHE_BUILD_SECRET -t "nhyne/user-api:$LOCAL_TAG" .
           docker login -p $DOCKER_PASSWORD -u $DOCKER_USERNAME
           docker push "nhyne/user-api:$LOCAL_TAG"
