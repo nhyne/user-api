@@ -32,3 +32,4 @@ openssl = "*"
 # other
 rand = "0.7"
 scrypt = "0.2"
+regex = "1.3.1"

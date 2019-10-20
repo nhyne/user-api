@@ -20,8 +20,6 @@ extern crate diesel;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::result::Error;
-use dotenv::dotenv;
-use std::env;
 use std::ops::Deref;
 
 use rocket::http::Status;
@@ -30,7 +28,7 @@ use rocket::response::status::Custom;
 #[post("/new", format = "json", data = "<input_user>")]
 fn new(input_user: Json<RocketNewUser>) -> Result<Json<User>, Custom<Json<responses::Error>>> {
     use db::schema::users;
-    let connection = establish_connection();
+    let connection = db::establish_connection();
     let new_user = NewUser::new(
         // TODO: This should not need to be a clone, just make the function take a pointer
         // I genuinely feel ashamed for doing this
@@ -38,25 +36,29 @@ fn new(input_user: Json<RocketNewUser>) -> Result<Json<User>, Custom<Json<respon
         input_user.password.clone(),
         input_user.username.clone(),
     );
-    let created_user: Result<User, Error> = diesel::insert_into(users::table)
-        .values(new_user)
-        .get_result(&connection);
-    match created_user {
-        Ok(user) => Ok(Json(user)),
-        Err(e) => Err(Custom(
-            Status::InternalServerError,
-            Json(responses::Error{
-                message: e.to_string(),
-            })
-        )),
+    match new_user {
+        Ok(user) => {
+            let created_user: Result<User, Error> = diesel::insert_into(users::table)
+                .values(user)
+                .get_result(&connection);
+            match created_user {
+                Ok(inserted_user) => Ok(Json(inserted_user)),
+                Err(e) => Err(Custom(
+                    Status::InternalServerError,
+                    Json(responses::Error {
+                        message: e.to_string(),
+                    }),
+                )),
+            }
+        }
+        Err(e) => Err(Custom(Status::InternalServerError, Json(e))),
     }
 }
 
 #[post("/login", format = "json", data = "<login_attempt>")]
 fn login(login_attempt: Json<RocketLogin>) -> Json<Token> {
     use db::schema::users;
-    let connection = establish_connection();
-
+    let connection = db::establish_connection();
     // select user
     let selected_user_vec: Result<User, Error> = users::table
         .filter(users::email.eq(&login_attempt.email))
@@ -83,13 +85,6 @@ fn login(login_attempt: Json<RocketLogin>) -> Json<Token> {
 
 fn rocket() -> rocket::Rocket {
     rocket::ignite().mount("/api/users", routes![new, login])
-}
-
-// TODO: Use database pooling
-fn establish_connection() -> PgConnection {
-    dotenv().ok();
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url).expect(&format!("Error connecting to {}", database_url))
 }
 
 fn main() {
