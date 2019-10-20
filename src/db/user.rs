@@ -1,10 +1,18 @@
+extern crate jsonwebtoken as jwt;
 extern crate rand;
 extern crate scrypt;
 
 use crate::db::schema::users;
+use jwt::{decode, encode, Algorithm, Header, Validation};
 use rand::prelude::*;
 use scrypt::{scrypt_check, scrypt_simple, ScryptParams};
 use uuid::Uuid;
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    userId: Uuid,
+    services: Vec<String>,
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct RocketNewUser {
@@ -60,11 +68,29 @@ pub struct User {
 }
 
 impl User {
+    pub fn login_and_receive_jwt(&self, raw_password_attempt: &String) -> String {
+        let login_attempt = self.validate_password(raw_password_attempt);
+        if login_attempt {
+            self.generate_jwt()
+        } else {
+            String::from("")
+        }
+    }
+
     pub fn validate_password(&self, raw_password_attempt: &String) -> bool {
         let raw_password_val = format!("{}{}", self.salt, raw_password_attempt);
         match scrypt_check(&raw_password_val, &self.password) {
             Ok(_) => true,
             Err(_) => false,
         }
+    }
+
+    fn generate_jwt(&self) -> String {
+        let user_claims = Claims {
+            userId: self.id,
+            services: vec![String::from("archiver")],
+        };
+        let token = encode(&Header::default(), &user_claims, "secret".as_ref()).unwrap();
+        token
     }
 }
