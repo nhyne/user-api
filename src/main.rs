@@ -56,15 +56,12 @@ fn login(login_attempt: Json<RocketLogin>) -> JsonValue {
     println!("{:#?}", selected_user_vec);
     match selected_user_vec {
         Ok(user) => {
-            //            let user_val: User = User {
-            //                id: user.1,
-            //                email: user.2,
-            //                password: user.3,
-            //                username: user.4,
-            //                salt: user.5,
-            //            };
             let successful_login = User::validate_password(&user, &login_attempt.password);
-            json!("{message: good}")
+            if successful_login {
+                json!("{message: good}")
+            } else {
+                json!("{message: bad password}")
+            }
         }
         Err(_) => json!("{message: bad}"),
     }
