@@ -7,8 +7,6 @@ ARG RUSTC_WRAPPER=sccache
 
 ADD . /home/rust/src
 
-RUN sudo chown -R rust:rust /home/rust/src
-
 RUN sccache --start-server && cargo build --bin user-api --release && sccache -s
 
 FROM alpine:3.10.1 as runner
