@@ -7,8 +7,9 @@ extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
 mod db;
-use db::user::{NewUser, RocketNewUser, User, RocketLogin};
+use db::user::{NewUser, RocketLogin, RocketNewUser, User};
 use rocket_contrib::json::{Json, JsonValue};
+use uuid::Uuid;
 
 extern crate openssl;
 // Diesel ORM
@@ -42,16 +43,39 @@ fn new(input_user: Json<RocketNewUser>) -> JsonValue {
     }
 }
 
-//#[post("/login", format = "json", data = "login_attempt")]
-//fn login(login_attempt: Json<RocketLogin>) -> JsonValue {
-//    use db::schema::users;
-//    let connection = establish_connection();
-//
-//
-//}
+#[post("/login", format = "json", data = "<login_attempt>")]
+fn login(login_attempt: Json<RocketLogin>) -> JsonValue {
+    use db::schema::users;
+    let connection = establish_connection();
+
+    // select user
+    let selected_user_vec: Result<User, Error> = users::table
+        .filter(users::email.eq(&login_attempt.email))
+        .first(&connection);
+
+    println!("{:#?}", selected_user_vec);
+    match selected_user_vec {
+        Ok(user) => {
+            //            let user_val: User = User {
+            //                id: user.1,
+            //                email: user.2,
+            //                password: user.3,
+            //                username: user.4,
+            //                salt: user.5,
+            //            };
+            let successful_login = User::validate_password(&user, &login_attempt.password);
+            json!("{message: good}")
+        }
+        Err(_) => json!("{message: bad}"),
+    }
+
+    // run login attempt
+
+    // TODO: Should return a JWT that has the information the user will need
+}
 
 fn rocket() -> rocket::Rocket {
-    rocket::ignite().mount("/api/users", routes![new])
+    rocket::ignite().mount("/api/users", routes![new, login])
 }
 
 // TODO: Use database pooling

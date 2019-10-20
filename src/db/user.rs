@@ -50,17 +50,17 @@ impl NewUser {
     }
 }
 
-#[derive(Serialize, Deserialize, Queryable)]
+#[derive(Serialize, Deserialize, Queryable, Debug)]
 pub struct User {
     pub id: Uuid,
-    pub email: String,
-    pub password: String,
     pub username: String,
+    pub email: String,
     salt: String,
+    pub password: String,
 }
 
 impl User {
-    pub fn validate_password(&self, raw_password_attempt: String) -> bool {
+    pub fn validate_password(&self, raw_password_attempt: &String) -> bool {
         let raw_password_val = format!("{}{}", self.salt, raw_password_attempt);
         match scrypt_check(&raw_password_val, &self.password) {
             Ok(_) => true,
