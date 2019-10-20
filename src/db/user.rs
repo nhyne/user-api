@@ -6,12 +6,15 @@ use crate::db::schema::users;
 use jwt::{decode, encode, Algorithm, Header, Validation};
 use rand::prelude::*;
 use scrypt::{scrypt_check, scrypt_simple, ScryptParams};
+use std::time::{Duration, SystemTime};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
     userId: Uuid,
     services: Vec<String>,
+    // expiration time of the token
+    exp: SystemTime,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -86,9 +89,11 @@ impl User {
     }
 
     fn generate_jwt(&self) -> String {
+        let token_expiration = SystemTime::now() + Duration::new(1_800, 0);
         let user_claims = Claims {
             userId: self.id,
             services: vec![String::from("archiver")],
+            exp: token_expiration,
         };
         let token = encode(&Header::default(), &user_claims, "secret".as_ref()).unwrap();
         token
