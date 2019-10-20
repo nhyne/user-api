@@ -7,6 +7,7 @@ extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
 mod db;
+mod responses;
 use db::user::{NewUser, RocketLogin, RocketNewUser, Token, User};
 use rocket_contrib::json::{Json, JsonValue};
 use uuid::Uuid;
@@ -23,8 +24,11 @@ use dotenv::dotenv;
 use std::env;
 use std::ops::Deref;
 
+use rocket::http::Status;
+use rocket::response::status::Custom;
+
 #[post("/new", format = "json", data = "<input_user>")]
-fn new(input_user: Json<RocketNewUser>) -> JsonValue {
+fn new(input_user: Json<RocketNewUser>) -> Result<Json<User>, Custom<Json<responses::Error>>> {
     use db::schema::users;
     let connection = establish_connection();
     let new_user = NewUser::new(
@@ -38,8 +42,13 @@ fn new(input_user: Json<RocketNewUser>) -> JsonValue {
         .values(new_user)
         .get_result(&connection);
     match created_user {
-        Ok(user) => json!({"something": "cool"}),
-        Err(e) => json!("{message: bad}"),
+        Ok(user) => Ok(Json(user)),
+        Err(e) => Err(Custom(
+            Status::InternalServerError,
+            Json(responses::Error{
+                message: e.to_string(),
+            })
+        )),
     }
 }
 
