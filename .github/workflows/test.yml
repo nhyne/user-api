@@ -23,5 +23,5 @@ jobs:
       - name: test
         run: |
           sccache --start-server
-          cargo test --verbose
+          cargo test --verbose || df -h
           sccache -s
