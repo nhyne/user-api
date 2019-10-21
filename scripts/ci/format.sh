@@ -6,4 +6,4 @@ if [[ -z git status -s ]]; then
     exit 1
 fi
 
-cargo clippy
+cargo clippy -- -D warnings

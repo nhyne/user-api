@@ -12,7 +12,7 @@ use db::user::{Claims, NewUser, RocketLogin, RocketNewUser, Token, User};
 use dotenv::dotenv;
 use jsonwebtoken::{decode, Algorithm, Validation};
 use rocket_contrib::json::{Json, JsonValue};
-use uuid::Uuid;
+
 
 use std::env;
 
@@ -21,10 +21,10 @@ extern crate openssl;
 #[macro_use]
 extern crate diesel;
 
-use diesel::pg::PgConnection;
+
 use diesel::prelude::*;
 use diesel::result::Error;
-use std::ops::Deref;
+
 
 use rocket::http::Status;
 use rocket::response::status::Custom;
@@ -92,7 +92,7 @@ fn verify_jwt(jwt: Json<Token>) -> JsonValue {
         &Validation::new(Algorithm::default()),
     );
     match valid_token {
-        Ok(token) => json!("{valid: true}"),
+        Ok(_token) => json!("{valid: true}"),
         Err(_) => json!("{valid: false}"),
     }
 }

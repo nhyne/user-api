@@ -7,7 +7,7 @@ use crate::db::schema::users;
 use crate::responses::Error as ResponseError;
 use diesel::result::Error;
 use dotenv::dotenv;
-use jwt::{decode, encode, Algorithm, Header, Validation};
+use jwt::{encode, Header};
 use rand::prelude::*;
 use regex::Regex;
 use scrypt::{scrypt_check, scrypt_simple, ScryptParams};
@@ -85,7 +85,7 @@ impl NewUser {
         }
     }
 
-    fn validate_email(email: &String) -> Result<bool, ResponseError> {
+    fn validate_email(email: &str) -> Result<bool, ResponseError> {
         let connection = crate::db::establish_connection();
         let email_regex = Regex::new(
             r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})",
@@ -98,12 +98,12 @@ impl NewUser {
                 .first(&connection);
             match selected_user_vec {
                 Ok(_) => {
-                    return Err(ResponseError {
+                    Err(ResponseError {
                         message: String::from("Email already in use"),
                     })
                 }
                 // TODO: There are plenty of other errors that could happen besides not found, these should be accounted for
-                Err(_) => return Ok(true),
+                Err(_) => Ok(true),
             }
         } else {
             Err(ResponseError {
@@ -123,7 +123,7 @@ pub struct User {
 }
 
 impl User {
-    pub fn login_and_receive_jwt(&self, raw_password_attempt: &String) -> Token {
+    pub fn login_and_receive_jwt(&self, raw_password_attempt: &str) -> Token {
         let login_attempt = self.validate_password(raw_password_attempt);
         if login_attempt {
             self.generate_jwt()
@@ -134,12 +134,9 @@ impl User {
         }
     }
 
-    pub fn validate_password(&self, raw_password_attempt: &String) -> bool {
+    pub fn validate_password(&self, raw_password_attempt: &str) -> bool {
         let raw_password_val = format!("{}{}", self.salt, raw_password_attempt);
-        match scrypt_check(&raw_password_val, &self.password) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        scrypt_check(&raw_password_val, &self.password).is_ok()
     }
 
     fn generate_jwt(&self) -> Token {
