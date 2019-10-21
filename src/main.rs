@@ -7,9 +7,14 @@ extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
 mod db;
-use db::user::{NewUser, RocketLogin, RocketNewUser, User};
+mod responses;
+use db::user::{Claims, NewUser, RocketLogin, RocketNewUser, Token, User};
+use dotenv::dotenv;
+use jsonwebtoken::{decode, Algorithm, Validation};
 use rocket_contrib::json::{Json, JsonValue};
 use uuid::Uuid;
+
+use std::env;
 
 extern crate openssl;
 // Diesel ORM
@@ -19,14 +24,15 @@ extern crate diesel;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::result::Error;
-use dotenv::dotenv;
-use std::env;
 use std::ops::Deref;
 
+use rocket::http::Status;
+use rocket::response::status::Custom;
+
 #[post("/new", format = "json", data = "<input_user>")]
-fn new(input_user: Json<RocketNewUser>) -> JsonValue {
+fn new(input_user: Json<RocketNewUser>) -> Result<Json<User>, Custom<Json<responses::Error>>> {
     use db::schema::users;
-    let connection = establish_connection();
+    let connection = db::establish_connection();
     let new_user = NewUser::new(
         // TODO: This should not need to be a clone, just make the function take a pointer
         // I genuinely feel ashamed for doing this
@@ -34,52 +40,65 @@ fn new(input_user: Json<RocketNewUser>) -> JsonValue {
         input_user.password.clone(),
         input_user.username.clone(),
     );
-    let created_user: Result<User, Error> = diesel::insert_into(users::table)
-        .values(new_user)
-        .get_result(&connection);
-    match created_user {
-        Ok(user) => json!({"something": "cool"}),
-        Err(e) => json!("{message: bad}"),
+    match new_user {
+        Ok(user) => {
+            let created_user: Result<User, Error> = diesel::insert_into(users::table)
+                .values(user)
+                .get_result(&connection);
+            match created_user {
+                Ok(inserted_user) => Ok(Json(inserted_user)),
+                Err(e) => Err(Custom(
+                    Status::InternalServerError,
+                    Json(responses::Error {
+                        message: e.to_string(),
+                    }),
+                )),
+            }
+        }
+        Err(e) => Err(Custom(Status::InternalServerError, Json(e))),
     }
 }
 
 #[post("/login", format = "json", data = "<login_attempt>")]
-fn login(login_attempt: Json<RocketLogin>) -> JsonValue {
+fn login(login_attempt: Json<RocketLogin>) -> Json<Token> {
     use db::schema::users;
-    let connection = establish_connection();
-
+    let connection = db::establish_connection();
     // select user
     let selected_user_vec: Result<User, Error> = users::table
         .filter(users::email.eq(&login_attempt.email))
         .first(&connection);
 
-    println!("{:#?}", selected_user_vec);
     match selected_user_vec {
         Ok(user) => {
-            let successful_login = User::validate_password(&user, &login_attempt.password);
-            if successful_login {
-                json!("{message: good}")
-            } else {
-                json!("{message: bad password}")
-            }
+            let login_token = User::login_and_receive_jwt(&user, &login_attempt.password);
+            Json(login_token)
         }
-        Err(_) => json!("{message: bad}"),
+        Err(_) => {
+            let login_token = Token {
+                token: String::from(""),
+            };
+            Json(login_token)
+        }
     }
+}
 
-    // run login attempt
-
-    // TODO: Should return a JWT that has the information the user will need
+#[post("/verify_jwt", format = "json", data = "<jwt>")]
+fn verify_jwt(jwt: Json<Token>) -> JsonValue {
+    dotenv().ok();
+    let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let valid_token = decode::<Claims>(
+        &jwt.token,
+        jwt_secret.as_bytes(),
+        &Validation::new(Algorithm::default()),
+    );
+    match valid_token {
+        Ok(token) => json!("{valid: true}"),
+        Err(_) => json!("{valid: false}"),
+    }
 }
 
 fn rocket() -> rocket::Rocket {
-    rocket::ignite().mount("/api/users", routes![new, login])
-}
-
-// TODO: Use database pooling
-fn establish_connection() -> PgConnection {
-    dotenv().ok();
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url).expect(&format!("Error connecting to {}", database_url))
+    rocket::ignite().mount("/api/users", routes![new, login, verify_jwt])
 }
 
 fn main() {
