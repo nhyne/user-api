@@ -18,6 +18,8 @@ jobs:
       SCCACHE_BUCKET: nhyne-build-cache
     steps:
       - uses: actions/checkout@v1
+      - name: format
+        run: ./scripts/ci/format.sh
       - name: test
         run: |
           sccache --start-server
