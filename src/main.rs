@@ -8,9 +8,13 @@ extern crate rocket_contrib;
 extern crate serde_derive;
 mod db;
 mod responses;
-use db::user::{NewUser, RocketLogin, RocketNewUser, Token, User};
+use db::user::{Claims, NewUser, RocketLogin, RocketNewUser, Token, User};
+use dotenv::dotenv;
+use jsonwebtoken::{decode, Algorithm, Validation};
 use rocket_contrib::json::{Json, JsonValue};
 use uuid::Uuid;
+
+use std::env;
 
 extern crate openssl;
 // Diesel ORM
@@ -64,7 +68,6 @@ fn login(login_attempt: Json<RocketLogin>) -> Json<Token> {
         .filter(users::email.eq(&login_attempt.email))
         .first(&connection);
 
-    println!("{:#?}", selected_user_vec);
     match selected_user_vec {
         Ok(user) => {
             let login_token = User::login_and_receive_jwt(&user, &login_attempt.password);
@@ -77,14 +80,25 @@ fn login(login_attempt: Json<RocketLogin>) -> Json<Token> {
             Json(login_token)
         }
     }
+}
 
-    // run login attempt
-
-    // TODO: Should return a JWT that has the information the user will need
+#[post("/verify_jwt", format = "json", data = "<jwt>")]
+fn verify_jwt(jwt: Json<Token>) -> JsonValue {
+    dotenv().ok();
+    let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let valid_token = decode::<Claims>(
+        &jwt.token,
+        jwt_secret.as_bytes(),
+        &Validation::new(Algorithm::default()),
+    );
+    match valid_token {
+        Ok(token) => json!("{valid: true}"),
+        Err(_) => json!("{valid: false}"),
+    }
 }
 
 fn rocket() -> rocket::Rocket {
-    rocket::ignite().mount("/api/users", routes![new, login])
+    rocket::ignite().mount("/api/users", routes![new, login, verify_jwt])
 }
 
 fn main() {

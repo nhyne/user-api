@@ -6,21 +6,23 @@ extern crate scrypt;
 use crate::db::schema::users;
 use crate::responses::Error as ResponseError;
 use diesel::result::Error;
+use dotenv::dotenv;
 use jwt::{decode, encode, Algorithm, Header, Validation};
 use rand::prelude::*;
 use regex::Regex;
 use scrypt::{scrypt_check, scrypt_simple, ScryptParams};
-use std::time::{Duration, SystemTime};
+use std::env;
 use uuid::Uuid;
 
+use chrono::Utc;
 use diesel::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Claims {
+pub struct Claims {
     user_id: Uuid,
     services: Vec<String>,
     // expiration time of the token
-    exp: SystemTime,
+    exp: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -141,13 +143,15 @@ impl User {
     }
 
     fn generate_jwt(&self) -> Token {
-        let token_expiration = SystemTime::now() + Duration::new(1_800, 0);
         let user_claims = Claims {
             user_id: self.id,
             services: vec![String::from("archiver")],
-            exp: token_expiration,
+            exp: Utc::now().timestamp() + 1, //_800,
         };
-        let token = encode(&Header::default(), &user_claims, "secret".as_ref()).unwrap();
+        dotenv().ok();
+        let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+
+        let token = encode(&Header::default(), &user_claims, &jwt_secret.as_bytes()).unwrap();
         Token { token }
     }
 }
