@@ -54,7 +54,6 @@ pub struct NewUser {
 
 impl NewUser {
     // TODO: Should return a result here based on if encryption works or not
-    // TODO: Need to validate that we have a valid email
     pub fn new(
         email: String,
         raw_password: String,
@@ -143,7 +142,7 @@ impl User {
         let user_claims = Claims {
             user_id: self.id,
             services: vec![String::from("archiver")],
-            exp: Utc::now().timestamp() + 1, //_800,
+            exp: Utc::now().timestamp() + 1_800,
         };
         dotenv().ok();
         let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
