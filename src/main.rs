@@ -53,7 +53,6 @@ fn login(login_attempt: Json<RocketLogin>) -> JsonValue {
         .filter(users::email.eq(&login_attempt.email))
         .first(&connection);
 
-    println!("{:#?}", selected_user_vec);
     match selected_user_vec {
         Ok(user) => {
             let successful_login = User::validate_password(&user, &login_attempt.password);
