@@ -13,6 +13,6 @@ RUN sccache --start-server && cargo build --bin user-api --release && sccache -s
 
 FROM alpine:3.10.1 as runner
 
-COPY --from=build /home/rust/src/target/x86_64-unknown-linux-musl/release/user-api /user-api
+COPY --from=build /home/root/src/target/x86_64-unknown-linux-musl/release/user-api /user-api
 
 CMD ["./user-api"]
