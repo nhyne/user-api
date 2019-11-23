@@ -10,7 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-18.04
     container:
-      image: nhyne/rust-musl-builder-sccache:nightly-2019-09-05
+      image: nhyne/rust-musl-builder:nightly
     env:
       RUSTC_WRAPPER: sccache
       AWS_ACCESS_KEY_ID: ${{ secrets.build_cache_aws_access_key_id }}
@@ -23,5 +23,5 @@ jobs:
       - name: test
         run: |
           sccache --start-server
-          cargo test --verbose || df -h
+          cargo test --verbose
           sccache -s
