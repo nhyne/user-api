@@ -1,4 +1,4 @@
-FROM nhyne/rust-musl-builder:nightly AS build
+FROM nhyne/rust-musl-builder:nightly-2019-11-16-gnu AS build
 
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
@@ -6,8 +6,6 @@ ARG SCCACHE_BUCKET=nhyne-build-cache
 ARG RUSTC_WRAPPER=sccache
 
 ADD . .
-
-RUN rustup target add x86_64-unknown-linux-musl
 
 RUN sccache --start-server && cargo build --bin user-api --release && sccache -s
 

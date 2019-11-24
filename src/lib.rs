@@ -9,5 +9,4 @@ extern crate rocket;
 
 pub mod auth;
 pub mod db;
-
 pub mod responses;

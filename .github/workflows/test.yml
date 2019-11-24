@@ -10,7 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-18.04
     container:
-      image: nhyne/rust-musl-builder:nightly
+      image: nhyne/rust-musl-builder:nightly-2019-11-16
     env:
       RUSTC_WRAPPER: sccache
       AWS_ACCESS_KEY_ID: ${{ secrets.build_cache_aws_access_key_id }}
@@ -18,11 +18,14 @@ jobs:
       SCCACHE_BUCKET: nhyne-build-cache
     steps:
       - uses: actions/checkout@v1
+      - name: start sccache
+        run: sccache --start-server
       - name: format
-        run: ./scripts/ci/format.sh
+        run: |
+          ./scripts/ci/format.sh
+          sccache -s
       - name: test
         run: |
-          sccache --start-server
           rustup target add x86_64-unknown-linux-musl
-          cargo test --verbose
+          cargo test --target x86_64-unknown-linux-musl
           sccache -s
