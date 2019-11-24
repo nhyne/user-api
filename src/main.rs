@@ -6,25 +6,21 @@ extern crate rocket;
 extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
+mod auth;
 mod db;
 mod responses;
-use db::user::{Claims, NewUser, RocketLogin, RocketNewUser, Token, User};
-use dotenv::dotenv;
-use jsonwebtoken::{decode, Algorithm, Validation};
+
+use auth::authentication::AuthenticatedJWT;
+use db::user::{NewUser, RocketLogin, RocketNewUser, Token, User};
 use rocket_contrib::json::{Json, JsonValue};
-
-
-use std::env;
 
 extern crate openssl;
 // Diesel ORM
 #[macro_use]
 extern crate diesel;
 
-
 use diesel::prelude::*;
 use diesel::result::Error;
-
 
 use rocket::http::Status;
 use rocket::response::status::Custom;
@@ -82,19 +78,10 @@ fn login(login_attempt: Json<RocketLogin>) -> Json<Token> {
     }
 }
 
-#[post("/verify_jwt", format = "json", data = "<jwt>")]
-fn verify_jwt(jwt: Json<Token>) -> JsonValue {
-    dotenv().ok();
-    let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
-    let valid_token = decode::<Claims>(
-        &jwt.token,
-        jwt_secret.as_bytes(),
-        &Validation::new(Algorithm::default()),
-    );
-    match valid_token {
-        Ok(_token) => json!("{valid: true}"),
-        Err(_) => json!("{valid: false}"),
-    }
+#[post("/verify_jwt")]
+// TODO: This should be a header not a body
+fn verify_jwt(_authn_header: AuthenticatedJWT) -> JsonValue {
+    json!("{'value': 'ok'}")
 }
 
 fn rocket() -> rocket::Rocket {
