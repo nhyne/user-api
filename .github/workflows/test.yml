@@ -23,5 +23,6 @@ jobs:
       - name: test
         run: |
           sccache --start-server
+          rustup target add x86_64-unknown-linux-musl
           cargo test --verbose
           sccache -s
