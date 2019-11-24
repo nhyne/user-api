@@ -84,8 +84,25 @@ fn verify_jwt(_authn_header: AuthenticatedJWT) -> JsonValue {
     json!("{'value': 'ok'}")
 }
 
+#[catch(404)]
+fn not_found() -> JsonValue {
+    json!("{\"message\": \"Path not found!\"}")
+}
+
+#[catch(400)]
+fn bad_request() -> JsonValue {
+    json!("{\"message\": \"Bad request! Looks like you're missing something or something is formatted improperly.\"}")
+}
+
+#[catch(401)]
+fn unauthorized() -> JsonValue {
+    json!("{\"message\": \"Unauthorized! Make sure you're including the Authorization header.\"}")
+}
+
 fn rocket() -> rocket::Rocket {
-    rocket::ignite().mount("/api/users", routes![new, login, verify_jwt])
+    rocket::ignite()
+        .mount("/api/users", routes![new, login, verify_jwt])
+        .register(catchers![not_found, bad_request, unauthorized])
 }
 
 fn main() {
