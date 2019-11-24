@@ -96,11 +96,9 @@ impl NewUser {
                 .filter(users::email.eq(email))
                 .first(&connection);
             match selected_user_vec {
-                Ok(_) => {
-                    Err(ResponseError {
-                        message: String::from("Email already in use"),
-                    })
-                }
+                Ok(_) => Err(ResponseError {
+                    message: String::from("Email already in use"),
+                }),
                 // TODO: There are plenty of other errors that could happen besides not found, these should be accounted for
                 Err(_) => Ok(true),
             }

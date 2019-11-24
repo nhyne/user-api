@@ -13,7 +13,6 @@ use dotenv::dotenv;
 use jsonwebtoken::{decode, Algorithm, Validation};
 use rocket_contrib::json::{Json, JsonValue};
 
-
 use std::env;
 
 extern crate openssl;
@@ -21,10 +20,8 @@ extern crate openssl;
 #[macro_use]
 extern crate diesel;
 
-
 use diesel::prelude::*;
 use diesel::result::Error;
-
 
 use rocket::http::Status;
 use rocket::response::status::Custom;
@@ -83,7 +80,7 @@ fn login(login_attempt: Json<RocketLogin>) -> Json<Token> {
 }
 
 #[post("/verify_jwt", format = "json", data = "<jwt>")]
-fn verify_jwt(jwt: Json<Token>) -> JsonValue {
+fn verify_jwt(jwt: Json<Token>) -> Result<JsonValue, Custom<Json<responses::Error>>> {
     dotenv().ok();
     let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let valid_token = decode::<Claims>(
@@ -92,8 +89,13 @@ fn verify_jwt(jwt: Json<Token>) -> JsonValue {
         &Validation::new(Algorithm::default()),
     );
     match valid_token {
-        Ok(_token) => json!("{valid: true}"),
-        Err(_) => json!("{valid: false}"),
+        Ok(_token) => Ok(json!("{valid: true}")),
+        Err(e) => Err(Custom(
+            Status::InternalServerError,
+            Json(responses::Error {
+                message: e.to_string(),
+            }),
+        )),
     }
 }
 
