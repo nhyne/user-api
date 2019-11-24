@@ -78,7 +78,7 @@ fn login(login_attempt: Json<RocketLogin>) -> Json<Token> {
     }
 }
 
-#[post("/verify_jwt", format = "json")]
+#[post("/verify_jwt")]
 // TODO: This should be a header not a body
 fn verify_jwt(_authn_header: AuthenticatedJWT) -> JsonValue {
     json!("{'value': 'ok'}")
